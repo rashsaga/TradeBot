@@ -1,0 +1,6 @@
+src/bot.bat
+src/__pycache__/
+.idea/
+conf/__pycache__/
+db/
+conf/SECRETS.py
