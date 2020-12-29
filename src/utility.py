@@ -1,43 +1,49 @@
-def clearScreen():
+def clear_screen():
     import os
-    os.system('cls' if os.name=='nt' else 'clear')
+    os.system('cls' if os.name == 'nt' else 'clear')
 
-def fStr(num, prec = 8):
-    return (("{:."+str(prec)+"f}").format(num))
 
-def getSystemDateTime():
+def f_str(num, prec=8):
+    return ("{:." + str(prec) + "f}").format(num)
+
+
+def get_system_date_time():
     import datetime
-    return (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    return datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-def log(str):
-    print(getSystemDateTime() + " : " + str)
+
+def log(_str):
+    print(get_system_date_time() + " : " + _str)
+
 
 def sleep(seconds):
     import time
     time.sleep(seconds)
 
-def isFileExists(fullName):
-    import os
-    return (os.path.isfile(fullName))
 
-def sendEmail(subject, body):
+def is_file_exists(full_name):
+    import os
+    return os.path.isfile(full_name)
+
+
+def send_email(subject, body):
     import smtplib
     from email.mime.multipart import MIMEMultipart
     from email.mime.text import MIMEText
 
     try:
-        fromaddr = "42Notification@gmail.com"
-        toaddr = "42Notification@gmail.com"
+        from_addr = "42Notification@gmail.com"
+        to_addr = "42Notification@gmail.com"
         msg = MIMEMultipart()
-        msg['From'] = fromaddr
-        msg['To'] = toaddr
+        msg['From'] = from_addr
+        msg['To'] = to_addr
         msg['Subject'] = subject
         msg.attach(MIMEText(body, 'plain'))
 
         server = smtplib.SMTP('smtp.gmail.com', 587)
         server.starttls()
-        server.login(fromaddr, "Password/1")
-        server.sendmail(fromaddr, toaddr, msg.as_string())
+        server.login(from_addr, "Password/1")
+        server.sendmail(from_addr, to_addr, msg.as_string())
         server.quit()
     except:
         print("Exception in sending email")

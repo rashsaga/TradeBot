@@ -5,11 +5,9 @@
 ''' GENERAL SETTINGS '''
 ASSETS_DB_FILE_NAME = '../db/assetsData.db'
 
-
-
 ''' TRADING-SPECIFIC SETTINGS '''
 BASE_ASSET = 'USDT'
-DELAY_IN_EACH_CYCLE = 1 #seconds
+DELAY_IN_EACH_CYCLE = 1  # seconds
 
 ''' BUY MANAGER - INPUTS '''
 BUYING_ENABLE = False

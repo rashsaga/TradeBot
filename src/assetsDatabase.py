@@ -2,7 +2,7 @@ import pickledb
 import sys
 
 
-class AssetsDatabase():
+class AssetsDatabase:
     # Persistent key value pair
     SETTLED_UPTO_TRADE_ID_KEY = 'settledUptoTradeId'
     MIN_VALUE_KEY = 'minValue'
@@ -31,30 +31,30 @@ class AssetsDatabase():
                                    EFFECTIVE_PURCHASE_PRICE_KEY: 0,
                                    SELL_STATUS_KEY: SELL_STATUS_BLACKLISTED}
 
-    def __init__(self, assetsDBFileName):
-        self.assetsDB = pickledb.load(assetsDBFileName, False)
+    def __init__(self, assets_db_file_name):
+        self.assetsDB = pickledb.load(assets_db_file_name, False)
 
-    def getAssetData(self, assetSymbol, key=None):
-        assetData = self.assetsDB.get(assetSymbol)
-        return (assetData if (key == None) else (assetData[key]))
+    def get_asset_data(self, asset_symbol, key=None):
+        asset_data = self.assetsDB.get(asset_symbol)
+        return asset_data if (key is None) else (asset_data[key])
 
-    def setAssetData(self, assetSymbol, key, value):
-        isValueChanged = False
-        valueInDb = self.assetsDB.get(assetSymbol)[key]
-        if valueInDb is False or valueInDb != value:
-            self.assetsDB.set(assetSymbol)[key] = value
-            isValueChanged = True
+    def set_asset_data(self, asset_symbol, key, value):
+        is_value_changed = False
+        value_in_db = self.assetsDB.get(asset_symbol)[key]
+        if value_in_db is False or value_in_db != value:
+            self.assetsDB.set(asset_symbol)[key] = value
+            is_value_changed = True
             if key in self.PERSISTENT_KEYS_DEFAULT_VALUE:
                 self.assetsDB.dump()
-        return isValueChanged
+        return is_value_changed
 
-    def resetAssetData(self, assetSymbol, key):
-        self.setAssetData(assetSymbol, key, self.PERSISTENT_KEYS_DEFAULT_VALUE[key])
+    def reset_asset_data(self, asset_symbol, key):
+        self.set_asset_data(asset_symbol, key, self.PERSISTENT_KEYS_DEFAULT_VALUE[key])
 
-    def addAsset(self, assetSymbol):
-        if self.getAssetData(assetSymbol) == None:
-            self.assetsDB.set(assetSymbol, {**self.PERSISTENT_KEYS_DEFAULT_VALUE, **self.VOLATILE_KEYS_DEFAULT_VALUE})
+    def add_asset(self, asset_symbol):
+        if self.get_asset_data(asset_symbol) is None:
+            self.assetsDB.set(asset_symbol, {**self.PERSISTENT_KEYS_DEFAULT_VALUE, **self.VOLATILE_KEYS_DEFAULT_VALUE})
             self.assetsDB.dump()
 
-    def getAllAssetsList(self):
+    def get_all_assets_list(self):
         return self.assetsDB.getall()
