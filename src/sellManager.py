@@ -186,6 +186,6 @@ class SellManager:
                     return True
                 if (asset_data[self.assetsDB.IS_PROFIT_LOCKED_KEY] is True) and (
                         asset_data[self.assetsDB.CURRENT_VALUE_KEY] < (
-                        (100 - GLOBAL_TRAILING_STOP_LOSS_TAKE_PROFIT) * 100 * asset_data[self.assetsDB.MAX_VALUE_KEY])):
+                        (100 - GLOBAL_TRAILING_STOP_LOSS_TAKE_PROFIT) / 100 * asset_data[self.assetsDB.MAX_VALUE_KEY])):
                     self.sell_asset(assetSymbol, asset_data[self.assetsDB.BALANCE_KEY])
                     return True

@@ -1,3 +1,5 @@
+from conf.SECRETS import EMAIL_ADDRESS, EMAIL_PASSWORD
+
 def clear_screen():
     import os
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -32,8 +34,7 @@ def send_email(subject, body):
     from email.mime.text import MIMEText
 
     try:
-        from_addr = "42Notification@gmail.com"
-        to_addr = "42Notification@gmail.com"
+        from_addr = to_addr = EMAIL_ADDRESS
         msg = MIMEMultipart()
         msg['From'] = from_addr
         msg['To'] = to_addr
@@ -42,7 +43,7 @@ def send_email(subject, body):
 
         server = smtplib.SMTP('smtp.gmail.com', 587)
         server.starttls()
-        server.login(from_addr, "Password/1")
+        server.login(from_addr, EMAIL_PASSWORD)
         server.sendmail(from_addr, to_addr, msg.as_string())
         server.quit()
     except:
