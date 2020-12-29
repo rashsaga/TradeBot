@@ -4,3 +4,4 @@ src/__pycache__/
 conf/__pycache__/
 db/
 conf/SECRETS.py
+venv/

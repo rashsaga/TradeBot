@@ -1,4 +1,4 @@
-import pickledb3
+import pickledb
 import sys
 
 class AssetsDatabase():
@@ -31,7 +31,7 @@ class AssetsDatabase():
                                    SELL_STATUS_KEY: SELL_STATUS_BLACKLISTED}
 
     def __init__(self, assetsDBFileName):
-        self.assetsDB = pickledb3.load(assetsDBFileName, False)
+        self.assetsDB = pickledb.load(assetsDBFileName, False)
 
     def getAssetData(self, assetSymbol, key = None):
         assetData = self.assetsDB.get(assetSymbol)
