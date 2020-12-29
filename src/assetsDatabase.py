@@ -1,8 +1,9 @@
 import pickledb
 import sys
 
+
 class AssetsDatabase():
-    #Persistent key value pair
+    # Persistent key value pair
     SETTLED_UPTO_TRADE_ID_KEY = 'settledUptoTradeId'
     MIN_VALUE_KEY = 'minValue'
     MAX_VALUE_KEY = 'maxValue'
@@ -14,7 +15,7 @@ class AssetsDatabase():
                                      IS_PROFIT_LOCKED_KEY: False,
                                      BALANCE_KEY: 0}
 
-    #Other key value pair
+    # Other key value pair
     CURRENT_VALUE_KEY = 'currentValue'
     EFFECTIVE_PURCHASE_PRICE_KEY = 'effectivePurchasePrice'
     SELL_STATUS_KEY = 'sellStatus'
@@ -33,16 +34,17 @@ class AssetsDatabase():
     def __init__(self, assetsDBFileName):
         self.assetsDB = pickledb.load(assetsDBFileName, False)
 
-    def getAssetData(self, assetSymbol, key = None):
+    def getAssetData(self, assetSymbol, key=None):
         assetData = self.assetsDB.get(assetSymbol)
         return (assetData if (key == None) else (assetData[key]))
 
     def setAssetData(self, assetSymbol, key, value):
         isValueChanged = False
-        if ((self.assetsDB.get(assetSymbol)[key]) != value):
-            self.assetsDB.get(assetSymbol)[key] = value
+        valueInDb = self.assetsDB.get(assetSymbol)[key]
+        if valueInDb is False or valueInDb != value:
+            self.assetsDB.set(assetSymbol)[key] = value
             isValueChanged = True
-            if(key in self.PERSISTENT_KEYS_DEFAULT_VALUE):
+            if key in self.PERSISTENT_KEYS_DEFAULT_VALUE:
                 self.assetsDB.dump()
         return isValueChanged
 
