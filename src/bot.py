@@ -6,8 +6,6 @@ from buyManager import BuyManager
 from utility import *
 from conf.SETTINGS import *
 
-ASSETS_DB_FILE_NAME = '../db/assetsData.db'
-
 def botMain():
     log("Inside botMain()")
     tradingClient = TradingClient()
