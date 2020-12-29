@@ -49,8 +49,6 @@ class TradingClient:
                 sleep(self.INTER_ATTEMPT_DELAY)
 
     def sell_asset(self, asset_pair, asset_quantity):
-        log("ASKED TO SELL !!!!", asset_pair, asset_quantity)
-        return
         while True:
             try:
                 self.client.order_market_sell(symbol=asset_pair, quantity=asset_quantity)
