@@ -1,6 +1,6 @@
 ''' Settings for bot '''
 ''' GENERAL SETTINGS '''
-BASE_ASSET = 'BTC'
+BASE_ASSET = 'USDT'
 DELAY_IN_EACH_CYCLE = 1 #seconds
 
 ''' BUY MANAGER - INPUTS '''

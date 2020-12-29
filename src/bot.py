@@ -12,6 +12,7 @@ from SETTINGS import *
 ASSETS_DB_FILE_NAME = '../db/assetsData.db'
 
 def botMain():
+    log("Inside botMain()")
     tradingClient = TradingClient()
     assetsDB = AssetsDatabase(ASSETS_DB_FILE_NAME)
     sellManager = SellManager(tradingClient, assetsDB)
