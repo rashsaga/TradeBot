@@ -1,13 +1,10 @@
-import sys
-sys.path.insert(0, '../conf')
-
 from tradingClient import TradingClient
 from assetsDatabase import AssetsDatabase
 from sellManager import SellManager
 from buyManager import BuyManager
 
 from utility import *
-from SETTINGS import *
+from conf.SETTINGS import *
 
 ASSETS_DB_FILE_NAME = '../db/assetsData.db'
 

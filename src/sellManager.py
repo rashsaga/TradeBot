@@ -1,6 +1,6 @@
 ''' Sell Manager Utility'''
 from utility import *
-from SETTINGS import *
+from conf.SETTINGS import *
 
 
 class SellManager():

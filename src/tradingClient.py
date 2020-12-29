@@ -1,5 +1,5 @@
 from binance.client import Client
-from SECRETS import *
+from conf.SECRETS import API_KEY, API_SECRET
 from utility import *
 
 class TradingClient():
