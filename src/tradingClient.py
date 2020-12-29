@@ -43,12 +43,14 @@ class TradingClient:
         while True:
             try:
                 status = self.client.get_system_status()
-                return status['status'] is 0
+                return status['status'] == 0
             except:
                 log("EXCEPTION : is_server_up")
                 sleep(self.INTER_ATTEMPT_DELAY)
 
     def sell_asset(self, asset_pair, asset_quantity):
+        log("ASKED TO SELL !!!!", asset_pair, asset_quantity)
+        return
         while True:
             try:
                 self.client.order_market_sell(symbol=asset_pair, quantity=asset_quantity)

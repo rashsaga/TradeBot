@@ -80,8 +80,8 @@ class SellManager:
         elif self.is_asset_balance_sellable(self.assetsDB.get_asset_data(asset_symbol, self.assetsDB.BALANCE_KEY),
                                             asset_pair_exchange_info) is False:
             sell_status = self.assetsDB.SELL_STATUS_LOW_BALANCE
-        elif asset_symbol in SELL_BLACKLIST_ASSETS:
-            sell_status = self.assetsDB.SELL_STATUS_BLACKLISTED
+        elif asset_symbol in SELL_BLOCKED_ASSETS_LIST:
+            sell_status = self.assetsDB.SELL_STATUS_BLOCKED
         elif self.assetsDB.get_asset_data(asset_symbol, self.assetsDB.EFFECTIVE_PURCHASE_PRICE_KEY) == 0:
             sell_status = self.assetsDB.SELL_STATUS_PURCHASE_PRICE_UNKNOWN
         else:
@@ -91,7 +91,7 @@ class SellManager:
 
     def refresh_asset_value_data(self, asset_symbol):
         asset_data = self.assetsDB.get_asset_data(asset_symbol)
-        if asset_data[self.assetsDB.SELL_STATUS_KEY] in [self.assetsDB.SELL_STATUS_BLACKLISTED,
+        if asset_data[self.assetsDB.SELL_STATUS_KEY] in [self.assetsDB.SELL_STATUS_BLOCKED,
                                                          self.assetsDB.SELL_STATUS_PURCHASE_PRICE_UNKNOWN,
                                                          self.assetsDB.SELL_STATUS_READY_TO_SELL]:
             asset_pair_current_value = self.tradingClient.get_symbol_pair_ticker_price(asset_symbol + BASE_ASSET)
@@ -156,8 +156,10 @@ class SellManager:
         asset_print_string_list = []
         all_assets = self.assetsDB.get_all_assets_list()
         for assetSymbol in all_assets:
+            if assetSymbol == 'BNB':
+                continue
             asset_sell_status = self.assetsDB.get_asset_data(assetSymbol, self.assetsDB.SELL_STATUS_KEY)
-            if asset_sell_status in [self.assetsDB.SELL_STATUS_BLACKLISTED,
+            if asset_sell_status in [self.assetsDB.SELL_STATUS_BLOCKED,
                                      self.assetsDB.SELL_STATUS_PURCHASE_PRICE_UNKNOWN,
                                      self.assetsDB.SELL_STATUS_READY_TO_SELL]:
                 self.append_asset_to_print_list(assetSymbol, asset_print_string_list)
