@@ -18,7 +18,7 @@ def bot_main():
         count = count + 1
         if trading_client.is_server_up():
             if (count % 3600) == 0:  # Every hour
-                trading_client.get_exchange_info(True)
+                trading_client.refresh_exchange_info_cache()
             if (count % 10) == 0:  # Every 10 seconds
                 sell_manager.refresh_all_assets_balances_data()
             sell_manager.refresh_all_assets_sell_data()

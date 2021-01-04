@@ -6,7 +6,7 @@ from utility import *
 class TradingClient:
     def __init__(self):
         self.client = None
-        self.exchangeInfo = None
+        self.exchangeInfoCache = None
         self.accountInfo = None
         self.INTER_ATTEMPT_DELAY = 0.5  # Seconds
         while True:
@@ -17,16 +17,18 @@ class TradingClient:
                 log("EXCEPTION : establishConnection : " + str(e))
                 sleep(self.INTER_ATTEMPT_DELAY)
 
-    def get_exchange_info(self, is_refresh_requested=False):
-        if is_refresh_requested:
-            while True:
-                try:
-                    self.exchangeInfo = self.client.get_exchange_info()
-                    break
-                except Exception as e:
-                    log("EXCEPTION : refreshExchangeInfo : " + str(e))
-                    sleep(self.INTER_ATTEMPT_DELAY)
-        return self.exchangeInfo
+    def refresh_exchange_info_cache(self):
+        while True:
+            try:
+                self.exchangeInfoCache = self.client.get_exchange_info()
+                self.exchangeInfoCache['_symbols'] = {i['symbol']:i for i in self.exchangeInfoCache['symbols']}
+                break
+            except Exception as e:
+                log("EXCEPTION : refreshExchangeInfo : " + str(e))
+                sleep(self.INTER_ATTEMPT_DELAY)
+
+    def get_exchange_info_cache(self):
+        return self.exchangeInfoCache
 
     def get_account_info(self, is_refresh_requested=False):
         if is_refresh_requested:
@@ -77,11 +79,7 @@ class TradingClient:
                 sleep(self.INTER_ATTEMPT_DELAY)
 
     def get_asset_pair_exchange_info(self, asset_pair):
-        asset_pairs_exchange_info = self.get_exchange_info()['symbols']
-        for assetPairExchangeInfo in asset_pairs_exchange_info:
-            if (assetPairExchangeInfo['symbol']) == asset_pair:
-                return assetPairExchangeInfo
-        return None
+        return self.get_exchange_info_cache()['_symbols'].get(asset_pair)
 
     def get_rounded_quantity_exchange_support(self, asset_pair, quantity):
         asset_pair_exchange_info = self.get_asset_pair_exchange_info(asset_pair)

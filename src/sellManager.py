@@ -13,35 +13,17 @@ class SellManager:
 
     def refresh_asset_balance(self, asset):
         """ Returns True if asset balance is changed, False if unchanged """
-        return self.assetsDB.set_asset_data(asset['asset'], self.assetsDB.BALANCE_KEY, float(asset['free']))
+        return self.assetsDB.set_asset_data(asset['asset'], self.assetsDB.BALANCE_KEY, float(asset['free']) + float(asset['locked']))
 
     def refresh_purchase_price_and_settled_upto_trade_id(self, asset_symbol):
         settled_upto_trade_id = self.assetsDB.get_asset_data(asset_symbol, self.assetsDB.SETTLED_UPTO_TRADE_ID_KEY)
-        new_settled_upto_trade_id = settled_upto_trade_id
-        total_price_paid = total_quantity_bought = balance_assets = effective_purchase_price = 0
-
-        trades = self.tradingClient.get_trades_from_given_trade_id((asset_symbol + BASE_ASSET),
-                                                                   settled_upto_trade_id + 1)
+        trades = self.tradingClient.get_trades_from_given_trade_id((asset_symbol + BASE_ASSET), settled_upto_trade_id + 1)
         if trades is not None:
             for trade in trades:
-                quantity = float(trade['qty'])
-                price = float(trade['price'])
-                if trade['isBuyer'] is True:
-                    total_price_paid = total_price_paid + (price * quantity)
-                    total_quantity_bought = total_quantity_bought + quantity
-                    balance_assets = balance_assets + quantity
+                if trade['isBuyer']:
+                    self.assetsDB.set_asset_data(asset_symbol, self.assetsDB.PURCHASE_PRICE_KEY, float(trade['price']))
                 else:
-                    balance_assets = balance_assets - quantity
-                if balance_assets == 0:
-                    total_price_paid = 0
-                    total_quantity_bought = 0
-                    new_settled_upto_trade_id = trade['id']
-            if total_quantity_bought != 0:
-                effective_purchase_price = (total_price_paid / total_quantity_bought)
-            self.assetsDB.set_asset_data(asset_symbol, self.assetsDB.SETTLED_UPTO_TRADE_ID_KEY,
-                                         new_settled_upto_trade_id)
-            self.assetsDB.set_asset_data(asset_symbol, self.assetsDB.EFFECTIVE_PURCHASE_PRICE_KEY,
-                                         effective_purchase_price)
+                    self.assetsDB.set_asset_data(asset_symbol, self.assetsDB.SETTLED_UPTO_TRADE_ID_KEY, trade['id'])
 
     def refresh_all_assets_balances_data(self):
         account_info = self.tradingClient.get_account_info(True)
@@ -51,10 +33,6 @@ class SellManager:
             if self.refresh_asset_balance(asset):
                 if self.tradingClient.get_asset_pair_exchange_info(asset['asset'] + BASE_ASSET) is not None:
                     self.refresh_purchase_price_and_settled_upto_trade_id(asset['asset'])
-
-    @staticmethod
-    def is_asset_pair_trading_on_exchange(asset_pair):
-        return (asset_pair['status']) == 'TRADING'
 
     @staticmethod
     def is_asset_balance_sellable(asset_balance, asset_pair):
@@ -67,15 +45,10 @@ class SellManager:
     def refresh_asset_sell_status(self, asset_symbol, asset_pair_exchange_info):
         if asset_pair_exchange_info is None:
             sell_status = self.assetsDB.SELL_STATUS_INVALID_PAIR
-        elif self.is_asset_pair_trading_on_exchange(asset_pair_exchange_info) is False:
+        elif not (asset_pair_exchange_info['status']) == 'TRADING':
             sell_status = self.assetsDB.SELL_STATUS_NOT_TRADING
-        elif self.is_asset_balance_sellable(self.assetsDB.get_asset_data(asset_symbol, self.assetsDB.BALANCE_KEY),
-                                            asset_pair_exchange_info) is False:
+        elif self.is_asset_balance_sellable(self.assetsDB.get_asset_data(asset_symbol, self.assetsDB.BALANCE_KEY), asset_pair_exchange_info) is False:
             sell_status = self.assetsDB.SELL_STATUS_LOW_BALANCE
-        elif asset_symbol in SELL_BLOCKED_ASSETS_LIST:
-            sell_status = self.assetsDB.SELL_STATUS_BLOCKED
-        elif self.assetsDB.get_asset_data(asset_symbol, self.assetsDB.EFFECTIVE_PURCHASE_PRICE_KEY) == 0:
-            sell_status = self.assetsDB.SELL_STATUS_PURCHASE_PRICE_UNKNOWN
         else:
             sell_status = self.assetsDB.SELL_STATUS_READY_TO_SELL
 
@@ -83,9 +56,7 @@ class SellManager:
 
     def refresh_asset_value_data(self, asset_symbol):
         asset_data = self.assetsDB.get_asset_data(asset_symbol)
-        if asset_data[self.assetsDB.SELL_STATUS_KEY] in [self.assetsDB.SELL_STATUS_BLOCKED,
-                                                         self.assetsDB.SELL_STATUS_PURCHASE_PRICE_UNKNOWN,
-                                                         self.assetsDB.SELL_STATUS_READY_TO_SELL]:
+        if asset_data[self.assetsDB.SELL_STATUS_KEY] == self.assetsDB.SELL_STATUS_READY_TO_SELL:
             asset_pair_current_value = self.tradingClient.get_asset_pair_ticker_price(asset_symbol + BASE_ASSET)
             self.assetsDB.set_asset_data(asset_symbol, self.assetsDB.CURRENT_VALUE_KEY, asset_pair_current_value)
             if asset_pair_current_value < asset_data[self.assetsDB.MIN_VALUE_KEY]:
@@ -95,7 +66,7 @@ class SellManager:
                 asset_pair_max_value = asset_pair_current_value
                 self.assetsDB.set_asset_data(asset_symbol, self.assetsDB.MAX_VALUE_KEY, asset_pair_max_value)
             if not asset_data[self.assetsDB.IS_PROFIT_LOCKED_KEY]:
-                if (asset_data[self.assetsDB.CURRENT_VALUE_KEY] > ((100 + GLOBAL_TRAILING_STOP_LOSS_MIN_PROFIT_LOCK) / 100 * asset_data[self.assetsDB.EFFECTIVE_PURCHASE_PRICE_KEY])) or ((asset_data[self.assetsDB.SELL_STATUS_KEY]) == self.assetsDB.SELL_STATUS_PURCHASE_PRICE_UNKNOWN):
+                if asset_data[self.assetsDB.CURRENT_VALUE_KEY] > ((100 + GLOBAL_TRAILING_STOP_LOSS_MIN_PROFIT_LOCK) / 100 * asset_data[self.assetsDB.PURCHASE_PRICE_KEY]):
                     self.assetsDB.set_asset_data(asset_symbol, self.assetsDB.IS_PROFIT_LOCKED_KEY, True)
 
     def refresh_all_assets_sell_data(self):
@@ -119,36 +90,32 @@ class SellManager:
         min_price = asset_data[self.assetsDB.MIN_VALUE_KEY]
         current_price = asset_data[self.assetsDB.CURRENT_VALUE_KEY]
         max_price = asset_data[self.assetsDB.MAX_VALUE_KEY]
-        effective_purchase_price = asset_data[self.assetsDB.EFFECTIVE_PURCHASE_PRICE_KEY]
+        purchase_price = asset_data[self.assetsDB.PURCHASE_PRICE_KEY]
         balance = asset_data[self.assetsDB.BALANCE_KEY]
         sell_status = asset_data[self.assetsDB.SELL_STATUS_KEY]
         is_profit_locked = asset_data[self.assetsDB.IS_PROFIT_LOCKED_KEY]
         min_price_percent_str = current_price_percent_str = max_price_percent_str = " ! "
 
-        if asset_data[self.assetsDB.SELL_STATUS_KEY] != self.assetsDB.SELL_STATUS_PURCHASE_PRICE_UNKNOWN:
+        if purchase_price != 0:
             min_price_percent_str = "(" + str(
-                f_str(((min_price - effective_purchase_price) / effective_purchase_price * 100), 2)) + "%)"
+                f_str(((min_price - purchase_price) / purchase_price * 100), 2)) + "%)"
             current_price_percent_str = "(" + str(
-                f_str(((current_price - effective_purchase_price) / effective_purchase_price * 100), 2)) + "%)"
+                f_str(((current_price - purchase_price) / purchase_price * 100), 2)) + "%)"
             max_price_percent_str = "(" + str(
-                f_str(((max_price - effective_purchase_price) / effective_purchase_price * 100), 2)) + "%)"
+                f_str(((max_price - purchase_price) / purchase_price * 100), 2)) + "%)"
 
         asset_print_string_list.append(
-            [asset_symbol, sell_status, balance, effective_purchase_price, f_str(min_price) + min_price_percent_str,
+            [asset_symbol, sell_status, balance, purchase_price, f_str(min_price) + min_price_percent_str,
              f_str(current_price) + current_price_percent_str, f_str(max_price) + max_price_percent_str,
              is_profit_locked])
 
     def print_assets_info(self):
         asset_print_string_list = []
         all_assets = self.assetsDB.get_all_assets_list()
-        for assetSymbol in all_assets:
-            if assetSymbol == 'BNB':
-                continue
-            asset_sell_status = self.assetsDB.get_asset_data(assetSymbol, self.assetsDB.SELL_STATUS_KEY)
-            if asset_sell_status in [self.assetsDB.SELL_STATUS_BLOCKED,
-                                     self.assetsDB.SELL_STATUS_PURCHASE_PRICE_UNKNOWN,
-                                     self.assetsDB.SELL_STATUS_READY_TO_SELL]:
-                self.append_asset_to_print_list(assetSymbol, asset_print_string_list)
+        for asset_symbol in all_assets:
+            asset_sell_status = self.assetsDB.get_asset_data(asset_symbol, self.assetsDB.SELL_STATUS_KEY)
+            if asset_sell_status == self.assetsDB.SELL_STATUS_READY_TO_SELL:
+                self.append_asset_to_print_list(asset_symbol, asset_print_string_list)
         self.print_assets_ready_to_sell(asset_print_string_list)
 
     def sell_asset(self, asset_symbol, asset_quantity):
@@ -163,12 +130,18 @@ class SellManager:
 
     def sell_assets_ready_to_sell(self):
         all_assets = self.assetsDB.get_all_assets_list()
-        for assetSymbol in all_assets:
-            asset_data = self.assetsDB.get_asset_data(assetSymbol)
+        for asset_symbol in all_assets:
+            asset_data = self.assetsDB.get_asset_data(asset_symbol)
             if asset_data[self.assetsDB.SELL_STATUS_KEY] == self.assetsDB.SELL_STATUS_READY_TO_SELL:
-                if asset_data[self.assetsDB.CURRENT_VALUE_KEY] < ((100 - GLOBAL_STOP_LOSS) / 100 * asset_data[self.assetsDB.EFFECTIVE_PURCHASE_PRICE_KEY]):
-                    self.sell_asset(assetSymbol, asset_data[self.assetsDB.BALANCE_KEY])
+                if asset_symbol in SELL_BLOCKED_ASSETS_LIST:
+                    print(asset_symbol + " : BLOCKED !")
+                    continue
+                if asset_data[self.assetsDB.PURCHASE_PRICE_KEY] == 0:
+                    print(asset_symbol + " : UNKNOWN PRICE !")
+                    continue
+                if asset_data[self.assetsDB.CURRENT_VALUE_KEY] < ((100 - GLOBAL_STOP_LOSS) / 100 * asset_data[self.assetsDB.PURCHASE_PRICE_KEY]):
+                    self.sell_asset(asset_symbol, asset_data[self.assetsDB.BALANCE_KEY])
                     return True
                 if asset_data[self.assetsDB.IS_PROFIT_LOCKED_KEY] and (asset_data[self.assetsDB.CURRENT_VALUE_KEY] < ((100 - GLOBAL_TRAILING_STOP_LOSS_TAKE_PROFIT) / 100 * asset_data[self.assetsDB.MAX_VALUE_KEY])):
-                    self.sell_asset(assetSymbol, asset_data[self.assetsDB.BALANCE_KEY])
+                    self.sell_asset(asset_symbol, asset_data[self.assetsDB.BALANCE_KEY])
                     return True

@@ -17,19 +17,17 @@ class AssetsDatabase:
 
     # Other key value pair
     CURRENT_VALUE_KEY = 'currentValue'
-    EFFECTIVE_PURCHASE_PRICE_KEY = 'effectivePurchasePrice'
+    PURCHASE_PRICE_KEY = 'purchasePrice'
     SELL_STATUS_KEY = 'sellStatus'
 
     SELL_STATUS_INVALID_PAIR = 'PAIR!'
     SELL_STATUS_NOT_TRADING = 'DOWN'
     SELL_STATUS_LOW_BALANCE = 'LOW'
-    SELL_STATUS_BLOCKED = 'BLOCK'
-    SELL_STATUS_PURCHASE_PRICE_UNKNOWN = 'FREE!'
     SELL_STATUS_READY_TO_SELL = 'READY'
 
     VOLATILE_KEYS_DEFAULT_VALUE = {CURRENT_VALUE_KEY: 0,
-                                   EFFECTIVE_PURCHASE_PRICE_KEY: 0,
-                                   SELL_STATUS_KEY: SELL_STATUS_BLOCKED}
+                                   PURCHASE_PRICE_KEY: 0,
+                                   SELL_STATUS_KEY: SELL_STATUS_INVALID_PAIR}
 
     def __init__(self, assets_db_file_name):
         self.assetsDB = pickledb.load(assets_db_file_name, False)
