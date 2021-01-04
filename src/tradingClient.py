@@ -13,8 +13,8 @@ class TradingClient:
             try:
                 self.client = Client(API_KEY, API_SECRET)
                 break
-            except:
-                log("EXCEPTION : establishConnection")
+            except Exception as e:
+                log("EXCEPTION : establishConnection : " + str(e))
                 sleep(self.INTER_ATTEMPT_DELAY)
 
     def get_exchange_info(self, is_refresh_requested=False):
@@ -23,8 +23,8 @@ class TradingClient:
                 try:
                     self.exchangeInfo = self.client.get_exchange_info()
                     break
-                except:
-                    log("EXCEPTION : refreshExchangeInfo")
+                except Exception as e:
+                    log("EXCEPTION : refreshExchangeInfo : " + str(e))
                     sleep(self.INTER_ATTEMPT_DELAY)
         return self.exchangeInfo
 
@@ -34,8 +34,8 @@ class TradingClient:
                 try:
                     self.accountInfo = self.client.get_account()
                     break
-                except:
-                    log("EXCEPTION : get_account_info")
+                except Exception as e:
+                    log("EXCEPTION : get_account_info : " + str(e))
                     sleep(self.INTER_ATTEMPT_DELAY)
         return self.accountInfo
 
@@ -44,33 +44,49 @@ class TradingClient:
             try:
                 status = self.client.get_system_status()
                 return status['status'] == 0
-            except:
-                log("EXCEPTION : is_server_up")
+            except Exception as e:
+                log("EXCEPTION : is_server_up : " + str(e))
                 sleep(self.INTER_ATTEMPT_DELAY)
 
     def sell_asset(self, asset_pair, asset_quantity):
+        asset_quantity = self.get_rounded_quantity_exchange_support(asset_pair, asset_quantity)
         while True:
             try:
                 self.client.order_market_sell(symbol=asset_pair, quantity=asset_quantity)
                 break
-            except:
-                log("EXCEPTION : sell_asset " + str(asset_pair) + ", Qty :" + str(asset_quantity))
+            except Exception as e:
+                log("EXCEPTION : sell_asset " + str(asset_pair) + ", Qty :" + str(asset_quantity) + " : " + str(e))
                 sleep(self.INTER_ATTEMPT_DELAY)
 
-    def get_symbol_pair_ticker_price(self, symbol_pair):
+    def get_asset_pair_ticker_price(self, asset_pair):
         while True:
             try:
-                symbol_ticker_price = self.client.get_symbol_ticker(symbol=symbol_pair)
+                symbol_ticker_price = self.client.get_symbol_ticker(symbol=asset_pair)
                 return float(symbol_ticker_price['price'])
-            except:
-                log("EXCEPTION : get_symbol_pair_ticker_price ")
+            except Exception as e:
+                log("EXCEPTION : get_asset_pair_ticker_price : " + str(e))
                 sleep(self.INTER_ATTEMPT_DELAY)
 
-    def get_trades_from_given_trade_id(self, symbol_pair, from_trade_id=0):
+    def get_trades_from_given_trade_id(self, asset_pair, from_trade_id=0):
         while True:
             try:
-                trades = self.client.get_my_trades(symbol=symbol_pair, fromId=from_trade_id)
+                trades = self.client.get_my_trades(symbol=asset_pair, fromId=from_trade_id)
                 return trades
-            except:
-                log("EXCEPTION : get_trades_from_given_trade_id ")
+            except Exception as e:
+                log("EXCEPTION : get_trades_from_given_trade_id : " + str(e))
                 sleep(self.INTER_ATTEMPT_DELAY)
+
+    def get_asset_pair_exchange_info(self, asset_pair):
+        asset_pairs_exchange_info = self.get_exchange_info()['symbols']
+        for assetPairExchangeInfo in asset_pairs_exchange_info:
+            if (assetPairExchangeInfo['symbol']) == asset_pair:
+                return assetPairExchangeInfo
+        return None
+
+    def get_rounded_quantity_exchange_support(self, asset_pair, quantity):
+        asset_pair_exchange_info = self.get_asset_pair_exchange_info(asset_pair)
+        if asset_pair_exchange_info:
+            for _filter in asset_pair_exchange_info['filters']:
+                if _filter['filterType'] == 'LOT_SIZE':
+                    return dumb_truncate(quantity, _filter['stepSize'])
+        return quantity

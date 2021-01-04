@@ -1,5 +1,6 @@
 from conf.SECRETS import EMAIL_ADDRESS, EMAIL_PASSWORD
 
+
 def clear_screen():
     import os
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -46,5 +47,23 @@ def send_email(subject, body):
         server.login(from_addr, EMAIL_PASSWORD)
         server.sendmail(from_addr, to_addr, msg.as_string())
         server.quit()
-    except:
-        print("Exception in sending email")
+    except Exception as e:
+        print("Exception in sending email : " + str(e))
+
+
+def dumb_truncate(num, lot_size_step_size_str):
+    whole, fractional = lot_size_step_size_str.split(".")
+    whole_len = len(whole.lstrip('0'))
+    fractional_len = len(fractional.rstrip('0'))
+
+    if whole_len != 0:
+        fractional_len = 0
+    if fractional_len != 0:
+        whole_len = 0
+    s = '{}'.format(num)
+    if 'e' in s or 'E' in s:  # TODO FIX THIS CASE !!!
+        return '{0:.{1}f}'.format(num, fractional_len)
+    i, p, d = s.partition('.')
+    whole_part = i[:len(i) - whole_len + 1] + ('0' * (whole_len - 1))
+    fractional_part = (d + '0' * fractional_len)[:fractional_len]
+    return float(whole_part + '.' + fractional_part)
