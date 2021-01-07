@@ -96,7 +96,12 @@ class SellManager:
         is_profit_locked = asset_data[self.assetsDB.IS_PROFIT_LOCKED_KEY]
         min_price_percent_str = current_price_percent_str = max_price_percent_str = " ! "
 
-        if purchase_price != 0:
+        if asset_symbol in SELL_BLOCKED_ASSETS_LIST:
+            sell_status += "-BLOCKED"
+
+        if purchase_price == 0:
+            sell_status += "-PRICE!"
+        else:
             min_price_percent_str = "(" + str(
                 f_str(((min_price - purchase_price) / purchase_price * 100), 2)) + "%)"
             current_price_percent_str = "(" + str(
@@ -133,11 +138,7 @@ class SellManager:
         for asset_symbol in all_assets:
             asset_data = self.assetsDB.get_asset_data(asset_symbol)
             if asset_data[self.assetsDB.SELL_STATUS_KEY] == self.assetsDB.SELL_STATUS_READY_TO_SELL:
-                if asset_symbol in SELL_BLOCKED_ASSETS_LIST:
-                    print(asset_symbol + " : BLOCKED !")
-                    continue
-                if asset_data[self.assetsDB.PURCHASE_PRICE_KEY] == 0:
-                    print(asset_symbol + " : UNKNOWN PRICE !")
+                if asset_symbol in SELL_BLOCKED_ASSETS_LIST or asset_data[self.assetsDB.PURCHASE_PRICE_KEY] == 0:
                     continue
                 if asset_data[self.assetsDB.CURRENT_VALUE_KEY] < ((100 - GLOBAL_STOP_LOSS) / 100 * asset_data[self.assetsDB.PURCHASE_PRICE_KEY]):
                     self.sell_asset(asset_symbol, asset_data[self.assetsDB.BALANCE_KEY])
