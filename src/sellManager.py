@@ -88,13 +88,13 @@ class SellManager:
     def append_asset_to_print_list(self, asset_symbol, asset_print_string_list):
         asset_data = self.assetsDB.get_asset_data(asset_symbol)
         min_price = asset_data[self.assetsDB.MIN_VALUE_KEY]
-        current_price = asset_data[self.assetsDB.CURRENT_VALUE_KEY]
+        current_value = asset_data[self.assetsDB.CURRENT_VALUE_KEY]
         max_price = asset_data[self.assetsDB.MAX_VALUE_KEY]
         purchase_price = asset_data[self.assetsDB.PURCHASE_PRICE_KEY]
         balance = asset_data[self.assetsDB.BALANCE_KEY]
         sell_status = asset_data[self.assetsDB.SELL_STATUS_KEY]
         is_profit_locked = asset_data[self.assetsDB.IS_PROFIT_LOCKED_KEY]
-        min_price_percent_str = current_price_percent_str = max_price_percent_str = " ! "
+        min_price_percent_str = current_value_percent_str = max_price_percent_str = " ! "
 
         if asset_symbol in SELL_BLOCKED_ASSETS_LIST:
             sell_status += "-BLOCKED"
@@ -104,14 +104,14 @@ class SellManager:
         else:
             min_price_percent_str = "(" + str(
                 f_str(((min_price - purchase_price) / purchase_price * 100), 2)) + "%)"
-            current_price_percent_str = "(" + str(
-                f_str(((current_price - purchase_price) / purchase_price * 100), 2)) + "%)"
+            current_value_percent_str = "(" + str(
+                f_str(((current_value - purchase_price) / purchase_price * 100), 2)) + "%)"
             max_price_percent_str = "(" + str(
                 f_str(((max_price - purchase_price) / purchase_price * 100), 2)) + "%)"
 
         asset_print_string_list.append(
             [asset_symbol, sell_status, balance, purchase_price, f_str(min_price) + min_price_percent_str,
-             f_str(current_price) + current_price_percent_str, f_str(max_price) + max_price_percent_str,
+             f_str(current_value) + current_value_percent_str, f_str(max_price) + max_price_percent_str,
              is_profit_locked])
 
     def print_assets_info(self):
